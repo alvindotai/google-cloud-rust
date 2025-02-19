@@ -30,7 +30,7 @@ use time::OffsetDateTime;
 
 const DEFAULT_SCOPES: &str = "https://www.googleapis.com/auth/cloud-platform";
 
-pub(crate) fn creds_from(js: serde_json::Value) -> Result<Credential> {
+pub fn creds_from(js: serde_json::Value) -> Result<Credential> {
     let service_account_info =
         serde_json::from_value::<ServiceAccountInfo>(js).map_err(CredentialError::non_retryable)?;
     let token_provider = ServiceAccountTokenProvider {
