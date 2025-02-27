@@ -51,7 +51,7 @@ struct ServiceAccountInfo {
     private_key_id: String,
     private_key: String,
     project_id: String,
-    universe_domain: String,
+    universe_domain: Option<String>,
 }
 
 impl std::fmt::Debug for ServiceAccountInfo {
