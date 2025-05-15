@@ -199,7 +199,7 @@ mod test {
             private_key_id: "test-private-key-id".to_string(),
             private_key: "super-duper-secret-private-key".to_string(),
             project_id: "test-project-id".to_string(),
-            universe_domain: "test-universe-domain".to_string(),
+            universe_domain: Some("test-universe-domain".to_string()),
         };
         let fmt = format!("{expected:?}");
         assert!(fmt.contains("test-client-email"), "{fmt}");
@@ -307,7 +307,7 @@ mod test {
             .private_key_id("test-private-key-id")
             .private_key("")
             .project_id("test-project-id")
-            .universe_domain("test-universe-domain")
+            .universe_domain(Some("test-universe-domain".to_string()))
             .build()
             .unwrap()
     }
