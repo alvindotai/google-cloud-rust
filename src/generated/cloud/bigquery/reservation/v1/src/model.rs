@@ -295,6 +295,54 @@ impl Reservation {
         self.original_primary_location = v.into();
         self
     }
+
+    /// Sets the value of [max_slots][crate::model::Reservation::max_slots].
+    pub fn set_max_slots<T>(mut self, v: T) -> Self
+    where
+        T: std::convert::Into<i64>,
+    {
+        self.max_slots = std::option::Option::Some(v.into());
+        self
+    }
+
+    /// Sets or clears the value of [max_slots][crate::model::Reservation::max_slots].
+    pub fn set_or_clear_max_slots<T>(mut self, v: std::option::Option<T>) -> Self
+    where
+        T: std::convert::Into<i64>,
+    {
+        self.max_slots = v.map(|x| x.into());
+        self
+    }
+
+    /// Sets the value of [scaling_mode][crate::model::Reservation::scaling_mode].
+    pub fn set_scaling_mode<T: std::convert::Into<crate::model::reservation::ScalingMode>>(
+        mut self,
+        v: T,
+    ) -> Self {
+        self.scaling_mode = v.into();
+        self
+    }
+
+    /// Sets the value of [labels][crate::model::Reservation::labels].
+    pub fn set_labels<T, K, V>(mut self, v: T) -> Self
+    where
+        T: std::iter::IntoIterator<Item = (K, V)>,
+        K: std::convert::Into<std::string::String>,
+        V: std::convert::Into<std::string::String>,
+    {
+        use std::iter::Iterator;
+        self.labels = v.into_iter().map(|(k, v)| (k.into(), v.into())).collect();
+        self
+    }
+
+    /// Sets the value of [reservation_group][crate::model::Reservation::reservation_group].
+    pub fn set_reservation_group<T: std::convert::Into<std::string::String>>(
+        mut self,
+        v: T,
+    ) -> Self {
+        self.reservation_group = v.into();
+        self
+    }
 }
 
 impl wkt::message::Message for Reservation {
@@ -353,8 +401,14 @@ pub mod reservation {
 
     /// The type of scaling modes.
     /// Different scaling behaviors are provided for different modes.
-    #[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+    #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
     pub struct ScalingMode(std::borrow::Cow<'static, str>);
+
+    impl std::default::Default for ScalingMode {
+        fn default() -> Self {
+            scaling_mode::SCALING_MODE_UNSPECIFIED
+        }
+    }
 
     impl ScalingMode {
         /// Creates a new ScalingMode instance.
