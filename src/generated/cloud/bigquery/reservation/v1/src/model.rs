@@ -178,7 +178,6 @@ pub struct Reservation {
     #[serde(default, skip_serializing_if = "std::option::Option::is_none")]
     pub max_slots: std::option::Option<i64>,
 
-
     /// Optional. The scaling mode for the reservation.
     /// If the field is present but max_slots is not present, requests will be
     /// rejected with error code `google.rpc.Code.INVALID_ARGUMENT`.
@@ -197,7 +196,6 @@ pub struct Reservation {
     /// or just {reservation_group}
     pub reservation_group: std::string::String,
 }
-
 
 impl Reservation {
     pub fn new() -> Self {
@@ -427,7 +425,8 @@ pub mod reservation {
         use super::ScalingMode;
 
         /// Default value of ScalingMode.
-        pub const SCALING_MODE_UNSPECIFIED: ScalingMode = ScalingMode::new("SCALING_MODE_UNSPECIFIED");
+        pub const SCALING_MODE_UNSPECIFIED: ScalingMode =
+            ScalingMode::new("SCALING_MODE_UNSPECIFIED");
 
         /// The reservation will scale up only using slots from autoscaling. It will
         /// not use any idle slots even if there may be some available. The upper
