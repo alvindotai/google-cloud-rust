@@ -129,7 +129,82 @@ pub struct Reservation {
     /// for the failover reservation will be applied to this location.
     #[serde(skip_serializing_if = "std::string::String::is_empty")]
     pub original_primary_location: std::string::String,
+
+    /// Optional. The overall max slots for the reservation, covering slot_capacity
+    /// (baseline), idle slots (if ignore_idle_slots is false) and scaled slots.
+    /// If present, the reservation won't use more than the specified number of
+    /// slots, even if there is demand and supply (from idle slots).
+    /// NOTE: capping a reservation's idle slot usage is best effort and its
+    /// usage may exceed the max_slots value. However, in terms of
+    /// autoscale.current_slots (which accounts for the additional added slots), it
+    /// will never exceed the max_slots - baseline.
+    ///
+    /// This field must be set together with the scaling_mode enum value,
+    /// otherwise the request will be rejected with error code
+    /// `google.rpc.Code.INVALID_ARGUMENT`.
+    ///
+    /// If the max_slots and scaling_mode are set, the autoscale or
+    /// autoscale.max_slots field must be unset. Otherwise the request will be
+    /// rejected with error code `google.rpc.Code.INVALID_ARGUMENT`. However, the
+    /// autoscale field may still be in the output. The autopscale.max_slots will
+    /// always show as 0 and the autoscaler.current_slots will represent the
+    /// current slots from autoscaler excluding idle slots.
+    /// For example, if the max_slots is 1000 and scaling_mode is AUTOSCALE_ONLY,
+    /// then in the output, the autoscaler.max_slots will be 0 and the
+    /// autoscaler.current_slots may be any value between 0 and 1000.
+    ///
+    /// If the max_slots is 1000, scaling_mode is ALL_SLOTS, the baseline is 100
+    /// and idle slots usage is 200, then in the output, the autoscaler.max_slots
+    /// will be 0 and the autoscaler.current_slots will not be higher than 700.
+    ///
+    /// If the max_slots is 1000, scaling_mode is IDLE_SLOTS_ONLY, then in the
+    /// output, the autoscaler field will be null.
+    ///
+    /// If the max_slots and scaling_mode are set, then the ignore_idle_slots field
+    /// must be aligned with the scaling_mode enum value.(See details in
+    /// ScalingMode comments). Otherwise the request will be rejected with
+    /// error code `google.rpc.Code.INVALID_ARGUMENT`.
+    ///
+    /// Please note,  the max_slots is for user to manage the part of slots greater
+    /// than the baseline. Therefore, we don't allow users to set max_slots smaller
+    /// or equal to the baseline as it will not be meaningful. If the field is
+    /// present and slot_capacity>=max_slots, requests will be rejected with error
+    /// code `google.rpc.Code.INVALID_ARGUMENT`.
+    ///
+    /// Please note that if max_slots is set to 0, we will treat it as unset.
+    /// Customers can set max_slots to 0 and set scaling_mode to
+    /// SCALING_MODE_UNSPECIFIED to disable the max_slots feature.
+    #[serde_as(as = "std::option::Option<serde_with::DisplayFromStr>")]
+    #[serde(default, skip_serializing_if = "std::option::Option::is_none")]
+    pub max_slots: std::option::Option<i64>,
+
+
+    /// Optional. The scaling mode for the reservation.
+    /// If the field is present but max_slots is not present, requests will be
+    /// rejected with error code `google.rpc.Code.INVALID_ARGUMENT`.
+    pub scaling_mode: crate::model::reservation::ScalingMode,
+
+    /// Optional. The labels associated with this reservation. You can use these
+    /// to organize and group your reservations.
+    /// You can set this property when you create or update a reservation.
+    pub labels: std::collections::HashMap<std::string::String, std::string::String>,
+
+    /// Optional. The reservation group that this reservation belongs to.
+    /// You can set this property when you create or update a reservation.
+    /// Reservations do not need to belong to a reservation group.
+    /// Format:
+    /// projects/{project}/locations/{location}/reservationGroups/{reservation_group}
+    /// or just {reservation_group}
+    pub reservation_group: std::string::String,
 }
+fn deserialize_optional_i64<'de, D>(deserializer: D) -> std::result::Result<std::option::Option<i64>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use serde::Deserialize;
+    std::option::Option::<i64>::deserialize(deserializer)
+}
+
 
 impl Reservation {
     pub fn new() -> Self {
@@ -280,6 +355,91 @@ pub mod reservation {
     impl wkt::message::Message for Autoscale {
         fn typename() -> &'static str {
             "type.googleapis.com/google.cloud.bigquery.reservation.v1.Reservation.Autoscale"
+        }
+    }
+
+    /// The type of scaling modes.
+    /// Different scaling behaviors are provided for different modes.
+    #[derive(Clone, Debug, Default, PartialEq, serde::Deserialize, serde::Serialize)]
+    pub struct ScalingMode(std::borrow::Cow<'static, str>);
+
+    impl ScalingMode {
+        /// Creates a new ScalingMode instance.
+        pub const fn new(v: &'static str) -> Self {
+            Self(std::borrow::Cow::Borrowed(v))
+        }
+
+        /// Gets the enum value.
+        pub fn value(&self) -> &str {
+            &self.0
+        }
+    }
+
+    /// Useful constants to work with [ScalingMode](ScalingMode)
+    pub mod scaling_mode {
+        use super::ScalingMode;
+
+        /// Default value of ScalingMode.
+        pub const SCALING_MODE_UNSPECIFIED: ScalingMode = ScalingMode::new("SCALING_MODE_UNSPECIFIED");
+
+        /// The reservation will scale up only using slots from autoscaling. It will
+        /// not use any idle slots even if there may be some available. The upper
+        /// limit that autoscaling can scale up to will be max_slots - baseline.
+        /// For example, if max_slots is 1000, baseline is 200 and customer sets
+        /// ScalingMode to AUTOSCALE_ONLY, then autoscalerg will scale up to 800
+        /// slots and no idle slots will be used.
+        ///
+        /// Please note, in this mode, the ignore_idle_slots field must be set to
+        /// true. Otherwise the request will be rejected with error code
+        /// `google.rpc.Code.INVALID_ARGUMENT`.
+        pub const AUTOSCALE_ONLY: ScalingMode = ScalingMode::new("AUTOSCALE_ONLY");
+
+        /// The reservation will scale up using only idle slots contributed by
+        /// other reservations or from unassigned commitments. If no idle slots are
+        /// available it will not scale up further. If the idle slots which it is
+        /// using are reclaimed by the contributing reservation(s) it may be forced
+        /// to scale down. The max idle slots the reservation can be max_slots -
+        /// baseline capacity. For example, if max_slots is 1000, baseline is 200 and
+        /// customer sets ScalingMode to IDLE_SLOTS_ONLY,
+        ///
+        /// 1. if there are 1000 idle slots available in other reservations, the
+        ///    reservation will scale up to 1000 slots with 200 baseline and 800 idle
+        ///    slots.
+        /// 1. if there are 500 idle slots available in other reservations, the
+        ///    reservation will scale up to 700 slots with 200 baseline and 300 idle
+        ///    slots.
+        ///    Please note, in this mode, the reservation might not be able to scale up
+        ///    to max_slots.
+        ///
+        /// Please note, in this mode, the ignore_idle_slots field must be set to
+        /// false. Otherwise the request will be rejected with error code
+        /// `google.rpc.Code.INVALID_ARGUMENT`.
+        pub const IDLE_SLOTS_ONLY: ScalingMode = ScalingMode::new("IDLE_SLOTS_ONLY");
+
+        /// The reservation will scale up using all slots available to it. It will
+        /// use idle slots contributed by other reservations or from unassigned
+        /// commitments first. If no idle slots are available it will scale up using
+        /// autoscaling. For example, if max_slots is 1000, baseline is 200 and
+        /// customer sets ScalingMode to ALL_SLOTS,
+        ///
+        /// 1. if there are 800 idle slots available in other reservations, the
+        ///    reservation will scale up to 1000 slots with 200 baseline and 800 idle
+        ///    slots.
+        /// 1. if there are 500 idle slots available in other reservations, the
+        ///    reservation will scale up to 1000 slots with 200 baseline, 500 idle
+        ///    slots and 300 autoscaling slots.
+        /// 1. if there are no idle slots available in other reservations, it will
+        ///    scale up to 1000 slots with 200 baseline and 800 autoscaling slots.
+        ///
+        /// Please note, in this mode, the ignore_idle_slots field must be set to
+        /// false. Otherwise the request will be rejected with error code
+        /// `google.rpc.Code.INVALID_ARGUMENT`.
+        pub const ALL_SLOTS: ScalingMode = ScalingMode::new("ALL_SLOTS");
+    }
+
+    impl std::convert::From<std::string::String> for ScalingMode {
+        fn from(value: std::string::String) -> Self {
+            Self(std::borrow::Cow::Owned(value))
         }
     }
 }
