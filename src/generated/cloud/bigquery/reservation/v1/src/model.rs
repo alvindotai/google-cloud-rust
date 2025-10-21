@@ -197,13 +197,6 @@ pub struct Reservation {
     /// or just {reservation_group}
     pub reservation_group: std::string::String,
 }
-fn deserialize_optional_i64<'de, D>(deserializer: D) -> std::result::Result<std::option::Option<i64>, D::Error>
-where
-    D: serde::Deserializer<'de>,
-{
-    use serde::Deserialize;
-    std::option::Option::<i64>::deserialize(deserializer)
-}
 
 
 impl Reservation {
