@@ -3028,6 +3028,8 @@ pub mod typed_value {
     use super::*;
 
     /// The typed value field.
+    use serde_with::serde_as;
+    #[serde_as]
     #[derive(Clone, Debug, PartialEq, serde::Deserialize, serde::Serialize)]
     #[serde(rename_all = "camelCase")]
     #[non_exhaustive]
@@ -3035,7 +3037,7 @@ pub mod typed_value {
         /// A Boolean value: `true` or `false`.
         BoolValue(bool),
         /// A 64-bit integer. Its range is approximately &plusmn;9.2x10\<sup\>18\</sup\>.
-        Int64Value(i64),
+        Int64Value(#[serde_as(as = "serde_with::DisplayFromStr")] i64),
         /// A 64-bit double-precision floating-point number. Its magnitude
         /// is approximately &plusmn;10\<sup\>&plusmn;300\</sup\> and it has 16
         /// significant digits of precision.
