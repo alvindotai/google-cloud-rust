@@ -28,7 +28,7 @@ repository.workspace = true
 [dependencies]
 auth        = { version = "0.18.0", path = "../auth", package = "google-cloud-auth" }
 base64      = "0.22.1"
-bytes       = "1.10.0"
+bytes       = "1.11.1"
 futures     = { version = "0.3.31", optional = true }
 http        = "1.1.0"
 pin-project = { version = "1.1.9", optional = true }
