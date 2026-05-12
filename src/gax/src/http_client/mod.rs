@@ -42,7 +42,10 @@ pub struct ReqwestClient {
 
 impl ReqwestClient {
     pub async fn new(config: ClientConfig, default_endpoint: &str) -> Result<Self> {
-        let inner = reqwest::Client::new();
+        let inner = reqwest::Client::builder()
+            .max_tls_version(reqwest::tls::Version::TLS_1_2)
+            .build()
+            .unwrap_or_else(|_| reqwest::Client::new());
         let cred = if let Some(c) = config.cred {
             c
         } else {
