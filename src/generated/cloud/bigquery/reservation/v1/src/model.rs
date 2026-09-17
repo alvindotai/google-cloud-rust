@@ -1599,6 +1599,23 @@ pub struct Assignment {
 
     /// Output only. State of the assignment.
     pub state: crate::model::assignment::State,
+
+    /// Optional. The identity the assignment is scoped to, narrowing it from
+    /// every job the `assignee` runs to the jobs of ONE principal. E.g.
+    /// `principal://goog/subject/alice@example.com` for a Google account, or
+    /// `principal://iam.googleapis.com/projects/-/serviceAccounts/sa@p.iam.gserviceaccount.com`
+    /// for a service account.
+    ///
+    /// Hand-added: the published protos this crate is generated from do not
+    /// carry it yet, but the v1 REST service accepts and returns it. Without
+    /// the field a per-principal assignment deserializes as though it were
+    /// project-wide, which reads as a different resource than it is.
+    ///
+    /// Only a reservation-selection assignment (one with a `job_type`) may
+    /// carry a principal; the service rejects it on a scheduling-policy
+    /// assignment.
+    #[serde(skip_serializing_if = "std::string::String::is_empty")]
+    pub principal: std::string::String,
 }
 
 impl Assignment {
@@ -1633,6 +1650,12 @@ impl Assignment {
         v: T,
     ) -> Self {
         self.state = v.into();
+        self
+    }
+
+    /// Sets the value of [principal][crate::model::Assignment::principal].
+    pub fn set_principal<T: std::convert::Into<std::string::String>>(mut self, v: T) -> Self {
+        self.principal = v.into();
         self
     }
 }
