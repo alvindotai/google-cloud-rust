@@ -34,7 +34,7 @@ thiserror      = "2"
 time           = { version = "0.3.37", features = ["serde"] }
 rustls         = "0.23.23"
 rustls-pemfile = "2.2"
-tokio          = { version = "1.42", features = ["fs"] }
+tokio          = { version = "1.43", features = ["fs"] }
 base64         = "0.22"
 derive_builder = "0.20.2"
 
@@ -49,5 +49,5 @@ scoped-env  = "2.1.0"
 serial_test = "3.2.0"
 tempfile    = "3.17.0"
 test-case   = "3.3.1"
-tokio       = { version = "1.42", features = ["macros", "rt-multi-thread", "test-util"] }
+tokio       = { version = "1.43", features = ["macros", "rt-multi-thread", "test-util"] }
 tokio-test  = "0.4.4"
