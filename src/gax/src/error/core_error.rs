@@ -76,7 +76,7 @@ impl Error {
     /// }
     /// ```
     pub fn as_inner<T: std::error::Error + Send + Sync + 'static>(&self) -> Option<&T> {
-        let mut error = self.source.as_ref() as &(dyn std::error::Error);
+        let mut error = self.source.as_ref() as &dyn std::error::Error;
         loop {
             match error.downcast_ref::<T>() {
                 Some(e) => return Some(e),
